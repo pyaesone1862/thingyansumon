@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Songkran Blessing 2026</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.2);
+            --border: rgba(255, 255, 255, 0.4);
+            --blur: blur(15px);
+            --primary: #2d5a27; 
+            --gold: #ffd700;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            overflow: hidden; background: #d0f0f5; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pyidaungsu", sans-serif;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- Rain Effect --- */
+        #rain-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
+        .drop {
+            position: absolute; width: 10px; height: 16px;
+            background-color: rgba(173, 216, 230, 0.6);
+            clip-path: path('M5,0 C5,0 10,7 10,10 A5,5 0 1,1 0,10 C0,7 5,0 5,0 Z');
+            animation: fallFull linear infinite;
+        }
+        @keyframes fallFull { from { transform: translateY(-50px); } to { transform: translateY(110vh); } }
+
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; z-index: 10; }
+        .hidden { display: none !important; }
+
+        /* --- First Screen --- */
+        #first-screen { justify-content: flex-end; align-items: center; padding-bottom: 50px; }
+        .bowl-container { width: 85%; max-width: 360px; cursor: pointer; }
+        .bowl-img { width: 100%; }
+        .tap-text { margin-top: 15px; color: #1a4d55; background: rgba(255,255,255,0.5); border-radius: 10px; padding: 10px 25px; backdrop-filter: blur(5px); font-weight: 600; }
+
+        /* --- iOS Alert --- */
+        .ios-alert-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 100;
+            display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px);
+        }
+        .ios-alert {
+            background: rgba(255, 255, 255, 0.95); width: 300px; border-radius: 14px;
+            text-align: center; animation: alertShow 0.3s ease-out; overflow: hidden;
+        }
+        @keyframes alertShow { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
+        .ios-alert-body { padding: 25px 20px; color: #000; font-size: 16px; line-height: 1.6; }
+        .ios-alert-body b { font-size: 20px; display: block; margin-bottom: 10px; color: #2d5a27; }
+        .ios-alert-btn { border-top: 1px solid rgba(0,0,0,0.1); padding: 15px; color: #007aff; font-weight: 600; cursor: pointer; }
+
+        /* --- Creator Section (Message ရေးရန်) --- */
+        #creator-ui { padding: 20px; text-align: center; width: 90%; }
+        textarea { width: 100%; height: 100px; border-radius: 10px; border: 1px solid #ccc; padding: 10px; font-size: 16px; margin-bottom: 10px; }
+        .qr-frame { background: white; padding: 15px; border: 5px solid var(--primary); display: inline-block; position: relative; margin-top: 10px; }
+        #qrcode-canvas { display: none; }
+        #qrcode-img { width: 200px; height: 200px; }
+        .qr-icon { position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:2px; font-size:24px; }
+
+        /* --- Final Card --- */
+        #final-card {
+            width: 90%; max-width: 400px; background: var(--glass); backdrop-filter: var(--blur);
+            border-radius: 24px; border: 1px solid var(--border); padding: 15px; text-align: center;
+        }
+        .video-box { width: 100%; border-radius: 18px; overflow: hidden; margin: 10px 0; }
+        video { width: 100%; }
+        .marquee { width: 100%; overflow: hidden; background: rgba(255,255,255,0.3); border-radius: 10px; padding: 8px 0; margin-top: 10px; }
+        .marquee p { display: inline-block; white-space: nowrap; animation: marqueeRun 15s linear infinite; margin: 0; color: #1a4d55; }
+        @keyframes marqueeRun { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+        .btn-group { display: flex; gap: 10px; width: 100%; margin-top: 15px; }
+        .btn { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-ok { background: rgba(0,0,0,0.1); color: #1a4d55; }
+        .btn-send { background: var(--primary); color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="first-screen" class="screen">
+        <div class="bowl-container" onclick="showBlessing()">
+            <img src="first.png" class="bowl-img" alt="Bowl">
+        </div>
+        <div class="tap-text" onclick="showBlessing()">ရေလောင်းပါရစေ 💦</div>
+    </div>
+
+    <div class="ios-alert-bg" id="blessing-alert" onclick="closeAlert()">
+        <div class="ios-alert">
+            <div class="ios-alert-body">
+                <b>💦 သင်္ကြန်ဆုတောင်း 💦</b>
+                <span id="received-text">ပျော်ရွှင်စရာ သင်္ကြန်အခါသမယ ဖြစ်ပါစေ။</span>
+            </div>
+            <div class="ios-alert-btn">ကြည့်ရှုမည်</div>
+        </div>
+    </div>
+
+    <div id="final-screen" class="screen hidden" style="justify-content: center; align-items: center;">
+        <div id="final-card">
+            <div style="font-weight:bold; color:#1a4d55;">သင်္ကြန်အမှတ်တရ</div>
+            <div class="video-box">
+                <video id="vid-music" playsinline loop>
+                    <source src="third.mp4" type="video/mp4">
+                </video>
+            </div>
+            <div class="marquee">
+                <p id="marquee-text">ပျော်ရွှင်စရာ သင်္ကြန်ပွဲတော်ကြီး ဖြစ်ပါစေ။ နှစ်သစ်မှာ ကောင်းကျိုးအဖြာဖြာ ပြည့်စုံစေဖို့ ဆုမွန်ကောင်း တောင်းပေးလိုက်ပါတယ်။</p>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-ok" onclick="location.reload()">OK</button>
+                <button class="btn btn-send" onclick="showCreator()">Send Friend 💌</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="creator-screen" class="screen hidden" style="justify-content: center; align-items: center; background: #fcfaf2;">
+        <div id="creator-ui">
+            <h3 style="color:#2d5a27;">သင်္ကြန်ဆုမွန်တောင်း စာလွှာ</h3>
+            <textarea id="messageInput" placeholder="သူငယ်ချင်းဆီ ပို့ချင်တဲ့စာသား ရေးပါ..."></textarea>
+            <button class="btn btn-send" onclick="generateQR()">OK (QR ထုတ်မယ်)</button>
+            
+            <div id="qr-result" class="hidden">
+                <div class="qr-frame" id="capture-area">
+                    <div id="qrcode-canvas"></div>
+                    <img id="qrcode-img" src="">
+                    <div class="qr-icon">💌</div>
+                </div>
+                <button class="btn" style="background:#ffd700; color:#333; margin-top:10px;" onclick="saveQR()">Save QR</button>
+                <p style="font-size:12px; color:gray; margin-top:5px;">QR ကို Save ပြီး သူငယ်ချင်းဆီ ပို့လိုက်ပါ</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="rain-container"></div>
+
+    <script>
+        // URL မှ စာသားဖတ်ယူခြင်း
+        const urlParams = new URLSearchParams(window.location.search);
+        const msg = urlParams.get('msg');
+        if(msg) {
+            const decoded = decodeURIComponent(msg);
+            document.getElementById('received-text').innerText = decoded;
+            document.getElementById('marquee-text').innerText = decoded;
+        }
+
+        // Rain Effect
+        function makeRain() {
+            const container = document.getElementById('rain-container');
+            for (let i = 0; i < 30; i++) {
+                const drop = document.createElement('div');
+                drop.classList.add('drop');
+                drop.style.left = Math.random() * 100 + '%';
+                drop.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                drop.style.animationDelay = Math.random() * 2 + 's';
+                container.appendChild(drop);
+            }
+        }
+        makeRain();
+
+        function showBlessing() {
+            document.getElementById('blessing-alert').style.display = 'flex';
+        }
+
+        function closeAlert() {
+            document.getElementById('blessing-alert').style.display = 'none';
+            document.getElementById('first-screen').classList.add('hidden');
+            document.getElementById('final-screen').classList.remove('hidden');
+            document.getElementById('vid-music').play();
+        }
+
+        function showCreator() {
+            document.getElementById('final-screen').classList.add('hidden');
+            document.getElementById('creator-screen').classList.remove('hidden');
+            document.getElementById('vid-music').pause();
+        }
+
+        function generateQR() {
+            const input = document.getElementById('messageInput').value.trim();
+            if(!input) return alert("စာသားရေးပါဦး");
+
+            const baseUrl = window.location.href.split('?')[0];
+            const finalLink = `${baseUrl}?msg=${encodeURIComponent(input)}`;
+
+            const qrDiv = document.getElementById('qrcode-canvas');
+            qrDiv.innerHTML = "";
+            new QRCode(qrDiv, {
+                text: finalLink,
+                width: 300,
+                height: 300,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            setTimeout(() => {
+                const canvas = qrDiv.querySelector('canvas');
+                document.getElementById('qrcode-img').src = canvas.toDataURL("image/png");
+                document.getElementById('qr-result').classList.remove('hidden');
+            }, 200);
+        }
+
+        function saveQR() {
+            const area = document.getElementById('capture-area');
+            html2canvas(area).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Songkran-Blessing-QR.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>
